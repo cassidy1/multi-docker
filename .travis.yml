@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t ryancassidy/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run ryancassidy/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t ryancassidy/multi-client ./client
+  - docker build -t ryancassidy/multi-nginx ./nginx
+  - docker build -t ryancassidy/multi-server ./server
+  - docker build -t ryancassidy/multi-worker ./worker
+  # Log in to the Docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_ID --password-stdin
+  # Take those images and push to Dockerhub
+  - docker push ryancassidy/multi-client
+  - docker push ryancassidy/multi-nginx
+  - docker push ryancassidy/multi-server
+  - docker push ryancassidy/multi-worker
